@@ -38,19 +38,21 @@ Steps included:
 
 🖥️ Running the App Locally
 1. Install dependencies
+```bash
 npm install
-
+````
 2. Run locally (dev)
+```bash
 npm start
-
+ ```
 App will be available at 👉 http://localhost:3000
 3. Run with PM2 (prod)
-
+```bash
 npm run build
 pm2 start dist/index.js --name my-app
 pm2 save
 Now the app will keep running in the background, even after you close the terminal.
-
+```
 📦 Deployment Notes
   CI/CD workflow is defined in .github/workflows/cicd.yml
   Uses GitHub-hosted runner for CI and self-hosted runner for CD

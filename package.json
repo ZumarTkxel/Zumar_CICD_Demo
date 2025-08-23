@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "lint": "eslint . --ext .ts",
-  "test": "jest --ci",
-  "build": "tsc",
-  "start": "node dist/index.js",
-  "start:prod": "cross-env NODE_ENV=production node dist/index.js"
-},
-
+    "lint": "eslint . --ext .ts",
+    "test": "jest --ci",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

@@ -46,6 +46,7 @@ npm install
 npm start
  ```
 App will be available at 👉 http://localhost:3000
+
 3. Run with PM2 (prod)
 ```bash
 npm run build
@@ -54,7 +55,8 @@ pm2 save
 Now the app will keep running in the background, even after you close the terminal.
 ```
 📦 Deployment Notes
-  CI/CD workflow is defined in .github/workflows/cicd.yml
-  Uses GitHub-hosted runner for CI and self-hosted runner for CD
-  PM2 ensures the Node.js app runs continuously
-  Application auto-starts on each new deployment
+  
+  1. CI/CD workflow is defined in .github/workflows/cicd.yml
+  2. Uses GitHub-hosted runner for CI and self-hosted runner for CD
+  3. PM2 ensures the Node.js app runs continuously
+  4. Application auto-starts on each new deployment

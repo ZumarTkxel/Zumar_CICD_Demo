@@ -40,7 +40,7 @@ jobs:
           name: build-artifact
           path: build.zip
 
-    cd:
+  cd:   # <-- must be at the same level as 'ci', not inside
     name: Deploy Application
     runs-on: self-hosted
     needs: ci
@@ -76,4 +76,3 @@ jobs:
           pm2 start dist/index.js --name my-app
           pm2 save
           pm2 status
-

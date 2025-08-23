@@ -40,10 +40,10 @@ jobs:
           name: build-artifact
           path: build.zip
 
-  cd:
+    cd:
     name: Deploy Application
-    runs-on: self-hosted   # runs only on your local runner
-    needs: ci              # only after CI succeeds
+    runs-on: self-hosted
+    needs: ci
 
     steps:
       - name: Checkout repository
@@ -56,7 +56,7 @@ jobs:
           path: ./artifact
 
       - name: Extract artifact
-        run: unzip -o ./artifact/build.zip -d ./app
+        run: unzip -o ./artifact/build.zip -d ./dist
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,20 +66,14 @@ jobs:
       - name: Install PM2
         run: npm install -g pm2
 
-      - name: Install dependencies
-        run: |
-          cd ./app
-          npm install
-
       - name: Set environment variables
         run: |
           export NODE_ENV=production
           export PORT=3000
-          echo "Environment variables configured"
 
       - name: Start Node.js app with PM2
         run: |
-          cd ./app
-          pm2 start dist/src/index.js --name my-app
+          pm2 start dist/index.js --name my-app
           pm2 save
           pm2 status
+

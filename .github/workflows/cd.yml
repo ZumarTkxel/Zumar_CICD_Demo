@@ -1,33 +1,102 @@
-name: CD Pipeline
+name: CI & CD
 
 on:
-  workflow_run:
-    workflows: ["CI Pipeline"]   # runs AFTER CI finishes
-    types:
-      - completed
+  push:
+    branches: [ "main" ]
 
 jobs:
-  deploy:
-    runs-on: self-hosted   # this uses YOUR runner
+  ci:
+    name: CI (build, lint, test, zip, upload)
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Download artifact
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Zip artifact
+        run: |
+          rm -f release.zip
+          # include runtime files only
+          zip -r release.zip dist package.json package-lock.json
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.zip
+          if-no-files-found: error
+
+  cd:
+    name: CD (self-hosted deploy)
+    needs: [ci]
+    runs-on: [self-hosted, prod]
+    # Put your runtime env here (requirement: configure in workflow)
+    env:
+      PORT: "3000"
+      MESSAGE: "Deployed via GitHub Actions on self-hosted runner"
+      NODE_ENV: "production"
+      APP_NAME: "myapp"
+      DEPLOY_DIR: "/home/gha/deploy"   # change if your runner user differs
+    steps:
+      - name: Prepare deploy dir
+        run: |
+          mkdir -p "$DEPLOY_DIR"
+          cd "$DEPLOY_DIR"
+          # Clean previous release.zip if exists
+          rm -f release.zip
+
+      - name: Download artifact from CI
         uses: actions/download-artifact@v4
         with:
-          name: build-artifact
-          path: ./artifact
+          name: release
+          path: ${{ env.DEPLOY_DIR }}
 
-      - name: Extract artifact
-        run: unzip ./artifact/build.zip -d ./app
-
-      - name: Set environment variables
+      - name: Unzip artifact
         run: |
-          export NODE_ENV=production
-          export PORT=3000
-          echo "Environment variables set!"
+          cd "$DEPLOY_DIR"
+          unzip -o release.zip
 
-      - name: Run application
+      - name: Install production deps
         run: |
-          cd app
-          nohup node dist/src/index.js > app.log 2>&1 &
-          echo "App started on port 3000"
+          cd "$DEPLOY_DIR"
+          npm ci --omit=dev
+
+      - name: Start/Restart app with PM2
+        run: |
+          # Ensure pm2 exists
+          if ! command -v pm2 >/dev/null 2>&1; then
+            npm i -g pm2
+          fi
+
+          cd "$DEPLOY_DIR"
+
+          # If process exists, restart; else start
+          if pm2 describe "$APP_NAME" >/dev/null; then
+            pm2 restart "$APP_NAME" --update-env
+          else
+            pm2 start dist/index.js --name "$APP_NAME"
+          fi
+
+          # Persist across reboots (first time only you may need sudo; set once outside CI)
+          pm2 save
+
+      - name: Show status
+        run: pm2 status

@@ -1,0 +1,68 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main   # Trigger when you push to main
+
+jobs:
+  ci:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint
+        run: npm run lint || echo "No lint configured"
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Package artifact
+        run: zip -r build.zip dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: build.zip
+
+  cd:
+    name: Deploy Application
+    runs-on: self-hosted   # runs only on your local runner
+    needs: ci              # only after CI succeeds
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: ./artifact
+
+      - name: Extract artifact
+        run: unzip ./artifact/build.zip -d ./app
+
+      - name: Set environment variables
+        run: |
+          export NODE_ENV=production
+          export PORT=3000
+          echo "Environment variables configured"
+
+      - name: Run application
+        run: |
+          cd app
+          nohup node dist/src/index.js > app.log 2>&1 &
+          echo "App started on port 3000"

@@ -60,3 +60,5 @@ Now the app will keep running in the background, even after you close the termin
   2. Uses GitHub-hosted runner for CI and self-hosted runner for CD
   3. PM2 ensures the Node.js app runs continuously
   4. Application auto-starts on each new deployment
+
+
